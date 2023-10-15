@@ -7,7 +7,7 @@ import openai
 import time
 import os
 import ast
-import Axis_prompts
+import prompt
 import re
 import pandas as pd
 #from tika import parser
@@ -57,9 +57,9 @@ class CV_database(CompletionGenerator):
 
     def reformat_CV(CV):
         CV_info = {}
-        fields = Axis_prompts.fields()
+        fields = prompt.fields()
         for section in fields:
-            CV_conversion_prompt = Axis_prompts.CV_converter_template(CV,section)
+            CV_conversion_prompt = prompt.CV_converter_template(CV,section)
             formated_CV = CompletionGenerator.generate_chat_completion(prompt=CV_conversion_prompt,query="")
             CV_info[section] =formated_CV
         return CV_info
@@ -82,7 +82,7 @@ class CV_database(CompletionGenerator):
         print(self.CV,self.CV_new,JD)
         rating_section = {}
         for section, section_content in self.CV_new.items():
-            rating_prompt = Axis_prompts.rating_template(JD,section,section_content) 
+            rating_prompt = prompt.rating_template(JD,section,section_content) 
             rating_string = CompletionGenerator.generate_chat_completion(prompt=rating_prompt,query="")
             rating_string.replace("\n", "").replace(" ", "")
             print(rating_string)
@@ -135,7 +135,7 @@ class QuestionHandler:
         pass
 
     def run_summary(self):
-        temp = Axis_prompts.summary_template(self.history, self.question, self.query, self.result)
+        temp = prompt.summary_template(self.history, self.question, self.query, self.result)
         output = CompletionGenerator.generate_completion(prompt = temp)
         self.history = output
         print(output)
@@ -145,14 +145,14 @@ class QuestionHandler:
         self.doc = doc
         if(query == ""):
             self.history = self.run_summary()
-            doc_keyword_prompt = Axis_prompts.keyword_prompt(self.doc_type)
+            doc_keyword_prompt = prompt.keyword_prompt(self.doc_type)
             print(doc_keyword_prompt)
             print(self.doc)
             list_topic = CompletionGenerator.generate_chat_completion(prompt = doc_keyword_prompt, query = self.doc)
             print(list_topic)
             self.list_topic = list_topic
         self.query = query
-        template = Axis_prompts.QuestionsPrompt(self.doc_type, self.list_topic, self.history)
+        template = prompt.QuestionsPrompt(self.doc_type, self.list_topic, self.history)
         output = CompletionGenerator.generate_chat_completion(prompt = template, query = query)
         self.output = output
         if(query != ""):
@@ -174,7 +174,7 @@ class JDResult(BaseModel):
 class JD_eval:
     def JD_evalution(JD):
         #Define the Prompt Template
-        job_description_prompt = Axis_prompts.jd_description_template(JD)
+        job_description_prompt = prompt.jd_description_template(JD)
 
         #Extract Section Headings from the JD
         required_sections = ['Job Title', 'Job Summary', 'Responsibilities', 'Requirements', 'Preferred Qualification', 'Company Overview', 'Benefits/Perks', 'Salary Range', 'Location', 'Contact Information']
@@ -215,7 +215,7 @@ class JD_eval:
 
         for section in sections:
             section_content = section_contents[section]
-            job_description_prompt = Axis_prompts.jd_description_template(section_content)
+            job_description_prompt = prompt.jd_description_template(section_content)
             suggested_text = CompletionGenerator.generate_chat_completion(prompt = job_description_prompt, query=f"Given the contents of the section {section}, please suggest a better way to write the section which will make it more readable.")
             recommended_sections[section] = suggested_text
 
